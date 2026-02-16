@@ -1,0 +1,37 @@
+# Secrets
+.env
+*.env
+**/*.env
+config.binance_futures_live.json
+config.*.live.json
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# IDE/OS
+.vscode/
+.idea/
+.DS_Store
+
+# Runtime artifacts
+logs/
+*.log
+trade_events.csv
+reports/*.csv
+reports/*.db
+reports/*.db-shm
+reports/*.db-wal
+reports/position_meta.json
+reports/strategy_cooldowns.json
+reports/filtered_signals.csv
+reports/high_conf_drops.csv
+reports/cycle_diag_log.csv
+reports/watchdog_run.log
+reports/regime_pnl_run.log
