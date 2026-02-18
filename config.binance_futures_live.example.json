@@ -1,9 +1,7 @@
 {
   "exchange": {
     "name": "binance",
-    "key": "YOUR_BINANCE_API_KEY",
-    "secret": "YOUR_BINANCE_API_SECRET"
-  },
-  "dry_run": false,
-  "stake_currency": "USDT"
+    "key": "TZo4458UzbNAPMzZfvrV06xQohMmc27EvdgaVaRWbTI9fhwAyfLO7BI10Zmk5FjZ",
+    "secret": "STTfgBUj5lcjwDFUyYNxZuvp4dy821RLVVppvtodBwyCaoIroRq58p48yv6RB5cH"
+  }
 }

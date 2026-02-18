@@ -35,3 +35,17 @@ reports/high_conf_drops.csv
 reports/cycle_diag_log.csv
 reports/watchdog_run.log
 reports/regime_pnl_run.log
+
+# runtime/generated
+reports/backups/
+reports/*.csv
+reports/*.json
+reports/*.db
+reports/*.log
+*.sqlite
+*.db
+*.wal
+*.shm
+trade_events.csv
+pnl_daily.csv
+trades_last6h.csv

@@ -37,32 +37,19 @@ PAIRS = STRAT_CONFIG["pairs"]
 _HTF_UNIVERSE_CACHE = {"ts": 0.0, "pairs": []}
 
 async def get_top_pairs_for_htf(exchange, top_n: int = 40):
-    """Return top USDT-M pairs by quote volume, with safe fallback."""
+    """Return the enabled fixed universe for HTF (2h/4h), no dynamic top-N.
+    Keeps 2h/4h aligned with user-selected 1m enabled pairs and lowers API load.
+    """
     now = time.time()
     if _HTF_UNIVERSE_CACHE["pairs"] and (now - _HTF_UNIVERSE_CACHE["ts"] < 1800):
         return _HTF_UNIVERSE_CACHE["pairs"]
-    try:
-        tickers = await exchange.fetch_tickers()
-        rows = []
-        excluded = set(STRAT_CONFIG.get("disabled_pairs", []))
-        excluded.add("EOSUSDT")
-        for sym, t in tickers.items():
-            if not sym.endswith('/USDT:USDT'):
-                continue
-            base = sym.split('/')[0]
-            p = f"{base}USDT"
-            if p in excluded:
-                continue
-            qv = float(t.get('quoteVolume') or t.get('baseVolume') or 0.0)
-            if qv <= 0:
-                continue
-            rows.append((qv, p))
-        rows.sort(reverse=True)
-        pairs = [p for _, p in rows[:top_n]]
-        if not pairs:
-            pairs = list(PAIRS)
-    except Exception:
-        pairs = list(PAIRS)
+
+    excluded = set(STRAT_CONFIG.get("disabled_pairs", []))
+    # HTF should use only currently enabled pairs from static config
+    pairs = [p for p in STRAT_CONFIG.get("pairs", []) if p not in excluded]
+    if not pairs:
+        pairs = [p for p in PAIRS if p not in excluded]
+
     _HTF_UNIVERSE_CACHE["ts"] = now
     _HTF_UNIVERSE_CACHE["pairs"] = pairs
     return pairs

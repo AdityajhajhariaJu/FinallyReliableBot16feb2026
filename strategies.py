@@ -116,7 +116,7 @@ class ScanResult:
 CONFIG = {
     "min_trade_size": 10,
     "min_trade_size_1m": 8,
-    "max_base_margin_1m": 8,
+    "max_base_margin_1m": 9,
     "max_concurrent_trades": 10,
     "max_trades_per_pair": 2,
     "risk_per_trade": 0.02,
@@ -181,8 +181,8 @@ CONFIG = {
     "strategy_categories": {
         "trend": ["ema_scalp", "triple_ema", "macd_flip", "atr_breakout", "macd_money_map_trend", "ema_cci_macd_combo", "ema_ribbon_33889_pullback", "ema10_20_cci_momentum", "topdown_aoi_shift", "impulse_macd_regime_breakout", "ema50_break_pullback_continuation", "ema_rsi_stoch_tripwire", "utbot_atr_adaptive_trend", "ma_slope_crossover_sr"],
         "reversion": ["rsi_snap", "stoch_cross", "obv_divergence", "funding_fade", "gaussian_channel", "macd_money_map_reversal", "ema_cci_macd_combo", "ema10_20_cci_momentum", "impulse_macd_regime_breakout"],
-        "structural": ["vwap_bounce", "engulfing_sr", "price_action_dle", "topdown_aoi_shift", "orderblock_mtf_inducement_breaker", "fvg_bos_inversion_mtf", "fib_precision_respect_met", "vsa_volume_truth"],
-        "SuperStrongYtStrategies": ["ema_cci_macd_combo", "ema_ribbon_33889_pullback", "ema10_20_cci_momentum", "price_action_dle", "topdown_aoi_shift", "impulse_macd_regime_breakout", "ema50_break_pullback_continuation", "orderblock_mtf_inducement_breaker", "fvg_bos_inversion_mtf", "fib_precision_respect_met", "ema_rsi_stoch_tripwire", "utbot_atr_adaptive_trend", "ma_slope_crossover_sr", "vsa_volume_truth"],
+        "structural": ["vwap_bounce", "engulfing_sr", "price_action_dle", "topdown_aoi_shift", "orderblock_mtf_inducement_breaker", "fvg_bos_inversion_mtf", "fib_precision_respect_met"],
+        "SuperStrongYtStrategies": ["ema_cci_macd_combo", "ema_ribbon_33889_pullback", "ema10_20_cci_momentum", "price_action_dle", "topdown_aoi_shift", "impulse_macd_regime_breakout", "ema50_break_pullback_continuation", "orderblock_mtf_inducement_breaker", "fvg_bos_inversion_mtf", "fib_precision_respect_met", "ema_rsi_stoch_tripwire", "utbot_atr_adaptive_trend", "ma_slope_crossover_sr"],
         "trend_4h": ["weekly_vwap_trend_4h", "ichimoku_breakout_4h"],
         "reversion_4h": ["bb_rsi_reversion_4h"],
         "structural_4h": ["structure_break_ob_4h"],
@@ -192,7 +192,10 @@ CONFIG = {
         "ADAUSDT", "MATICUSDT", "OPUSDT", "ARBUSDT", "ATOMUSDT", "BTCUSDT",
         "ETCUSDT",
         "APTUSDT", "FILUSDT", "ICPUSDT", "RUNEUSDT", "GRTUSDT",
+        "TRXUSDT", "CCUSDT", "XLMUSDT", "XMRUSDT", "SHIBUSDT",
+        "BCHUSDT", "LEOUSDT",
     ],
+    "disabled_pairs": ["EOSUSDT", "PIPPINUSDT", "RPLUSDT", "RIVERUSDT", "CCUSDT", "SPACEUSDT"],
     "timeframes": ["1m", "5m"],
     "max_1m_trades": 10,
     "max_2h_trades": 10,
@@ -1377,12 +1380,8 @@ class OrderBlockMTFInducementBreakerStrategy(BaseStrategy):
                 return Signal(side="LONG", confidence=min(conf,0.90), tp_percent=sl*2.4, sl_percent=sl, leverage=8, reason=f"OB MTF long confirm | zone=[{zl:.4f},{zh:.4f}] | Vol={vol:.1f}x")
 
         if bear_bias and near_bear:
-            zl, zh = near_bear
-            in_zone = zl * 0.998 <= price <= zh
-            bear_confirm = (c1.close > c1.open and c0.close < c0.open and c0.close < c1.low)
-            if in_zone and bear_confirm:
-                conf = 0.64 + min((vol - 0.8) / 4, 0.06)
-                return Signal(side="SHORT", confidence=min(conf,0.90), tp_percent=sl*2.4, sl_percent=sl, leverage=8, reason=f"OB MTF short confirm | zone=[{zl:.4f},{zh:.4f}] | Vol={vol:.1f}x")
+            # SHORT side disabled by user request: keep LONG-only behavior
+            pass
 
         # mode 2: inducement sweep trap near OB
         if bull_bias and near_bull:
@@ -1394,12 +1393,8 @@ class OrderBlockMTFInducementBreakerStrategy(BaseStrategy):
                 return Signal(side="LONG", confidence=conf, tp_percent=sl*2.8, sl_percent=sl, leverage=8, reason=f"OB inducement long sweep+reclaim | zone=[{zl:.4f},{zh:.4f}]")
 
         if bear_bias and near_bear:
-            zl, zh = near_bear
-            swept = c1.high > zh and c1.close < zh
-            reject = c0.close < zl and c0.close < c0.open
-            if swept and reject:
-                conf = 0.66
-                return Signal(side="SHORT", confidence=conf, tp_percent=sl*2.8, sl_percent=sl, leverage=8, reason=f"OB inducement short sweep+reject | zone=[{zl:.4f},{zh:.4f}]")
+            # SHORT side disabled by user request: keep LONG-only behavior
+            pass
 
         # mode 3: breaker block retest (broken OB becomes opposite S/R)
         if near_bear and bull_bias:
@@ -1411,12 +1406,8 @@ class OrderBlockMTFInducementBreakerStrategy(BaseStrategy):
                 return Signal(side="LONG", confidence=conf, tp_percent=sl*2.2, sl_percent=sl, leverage=8, reason=f"OB breaker long retest | old bear zone=[{zl:.4f},{zh:.4f}]")
 
         if near_bull and bear_bias:
-            zl, zh = near_bull
-            broken_dn = closes[-6] > zh and closes[-3] < zl
-            retest_fail = c1.high >= zl and c0.close < zl
-            if broken_dn and retest_fail:
-                conf = 0.63
-                return Signal(side="SHORT", confidence=conf, tp_percent=sl*2.2, sl_percent=sl, leverage=8, reason=f"OB breaker short retest | old bull zone=[{zl:.4f},{zh:.4f}]")
+            # SHORT side disabled by user request: keep LONG-only behavior
+            pass
 
         return None
 
@@ -1902,7 +1893,7 @@ class MASlopeCrossoverSRStrategy(BaseStrategy):
 
 # ── BUG-006 FIX: FundingFadeStrategy() removed from ALL_STRATEGIES ──
 ALL_STRATEGIES = [
-    EMAScalpStrategy(), RSISnapStrategy(), MACDFlipStrategy(), MACDMoneyMapTrendStrategy(), MACDMoneyMapReversalStrategy(), EMACCIMACDComboStrategy(), EMARibbon33889PullbackStrategy(), EMA1020CCIMomentumStrategy(), PriceActionDLEStrategy(), TopDownAOIShiftStrategy(), ImpulseMACDRegimeBreakoutStrategy(), EMA50BreakPullbackContinuationStrategy(), OrderBlockMTFInducementBreakerStrategy(), FVGBOSInversionMTFStrategy(), VSAVolumeTruthStrategy(), FibPrecisionRespectMETStrategy(), EMARSIStochTripwireStrategy(), UTBotATRAdaptiveTrendStrategy(), MASlopeCrossoverSRStrategy(), VWAPBounceStrategy(), StochCrossStrategy(), ATRBreakoutStrategy(), TripleEMAStrategy(), EngulfingSRStrategy(), OBVDivergenceStrategy(), GaussianChannelStrategy()
+    EMAScalpStrategy(), RSISnapStrategy(), MACDFlipStrategy(), MACDMoneyMapTrendStrategy(), MACDMoneyMapReversalStrategy(), EMACCIMACDComboStrategy(), EMARibbon33889PullbackStrategy(), EMA1020CCIMomentumStrategy(), PriceActionDLEStrategy(), TopDownAOIShiftStrategy(), ImpulseMACDRegimeBreakoutStrategy(), EMA50BreakPullbackContinuationStrategy(), OrderBlockMTFInducementBreakerStrategy(), FVGBOSInversionMTFStrategy(), FibPrecisionRespectMETStrategy(), EMARSIStochTripwireStrategy(), MASlopeCrossoverSRStrategy(), VWAPBounceStrategy(), StochCrossStrategy(), ATRBreakoutStrategy(), TripleEMAStrategy(), EngulfingSRStrategy(), GaussianChannelStrategy()
 ]
 
 
